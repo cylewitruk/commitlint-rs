@@ -51,7 +51,14 @@ impl Args {
 
     /// Read commit messages from stdin.
     pub fn read(&self) -> Result<Vec<Message>, Error> {
+        if self.edit {
+            let msg = std::fs::read_to_string("./.git/COMMIT_EDITMSG")
+                .expect("Failed to read './.git/COMMIT_EDITMSG");
+            return Ok(vec![Message::new(msg)]);
+        }
+
         if self.has_stdin() {
+            println!("Reading from stdin");
             let mut buffer = String::new();
             stdin()
                 .read_to_string(&mut buffer)
@@ -64,6 +71,7 @@ impl Args {
             path: self.cwd.clone(),
             to: self.to.clone(),
         };
+
         let messages = git::read(config)
             .iter()
             .map(|s| Message::new(s.to_string()))
